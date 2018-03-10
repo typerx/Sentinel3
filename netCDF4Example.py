@@ -4,7 +4,19 @@ import matplotlib.pyplot as plt
 from netCDF4 import Dataset
 import zipfile
 import os, sys
-
+import glob
+	
+def get_lastest(folder):
+	file = [os.path.join(folder,f) for f in os.listdir(folder)]
+	file.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+	return file[0]
+	
+#create directory old_zip and images if doesn't exist
+if not os.path.exists("old_zip"):
+    os.makedirs("old_zip")
+if not os.path.exists("images"):
+    os.makedirs("images")
+	
 ## extract zip
 for file in os.listdir("."):
 	if file.endswith(".zip"):
@@ -14,36 +26,83 @@ for file in os.listdir("."):
 		os.rename(file, "old_zip/"+file)
 
 ## Open a last modified file
-files = os.listdir("extract/")
-#print files
-files.sort()
-files.reverse()
-path = files[0]
-path = "extract/"+path
-print path
 
-#path = "extract\S3A_SL_1_RBT____20170207T220155_20170207T220455_20170208T002904_0179_014_115_0720_SVL_O_NR_002.SEN3"
-#path = "S3A_OL_1_EFR____20170207T075602_20170207T075653_20170208T200019_0051_014_106_4499_LN1_O_NT_002"
+#files = os.listdir("extract/")
+file = get_lastest("extract/")
+path_file = file.strip("extract/")
+#print (path_file)
+#files.sort()
+#files.reverse()
+path = file
+print (path)
 
 dirs = os.listdir(path)
 # This would print all the files and directories
+
+if not os.path.exists("images/"+path_file):
+	os.makedirs("images/"+path_file)
+
+
+for file in dirs:
+	if file.endswith('.nc'):
+		pf=os.path.join(path, file)
+		print ("pf: "+str(pf))
+		rootgrp = Dataset(pf, "r")
+		print ("rootgrp.variables.keys: "+str(rootgrp.variables.keys()))
+		var_num=rootgrp.variables.keys()
+		for var in var_num:
+			if var+".nc" == file:
+				print (var)
+				var_desc=rootgrp.variables[var]
+				print (var_desc.long_name)
+				plt.imshow(var_desc)
+				plt.axis('off')
+				plt.savefig("images/"+path_file+"/"+var+'.png')	
+		rootgrp.close()
+sys.exit()	
+'''		
+fotos = []
+	
+for file in dirs:
+	if file.endswith('.nc'):
+		if file.endswith('.nc')
+		pf=os.path.join(path, file)
+		#print pf
+		rootgrp = Dataset(pf, "r")
+		print ("var_num: "+str(rootgrp.variables.keys()))
+		var_num=rootgrp.variables.keys()
+		for var in var_num:
+			if var+".nc" == file:
+				print ("var: "+var)
+				var_desc=rootgrp.variables[var]
+				print ("var_desc.long_name: "+var_desc.long_name)
+				fotos.append(var_desc)
+		rootgrp.close()
+		
+print("lenght: "+str(len(fotos)))
+
+for i in range(len(fotos)):
+	#print(fotos[i])		
+	plt.imshow(fotos[i])
+	plt.axis('off')
+	plt.savefig("images/"+path_file+"/"+fotos[i]+'.png')	
+
 for file in dirs:
 	if file.endswith('.nc'):
 		pf=os.path.join(path, file)
 		#print pf
 		rootgrp = Dataset(pf, "r")
-		#print rootgrp.variables.keys()
+		print (rootgrp.variables.keys())
 		var_num=rootgrp.variables.keys()
-		for var in var_num:
-			if var+".nc" == file:
-				print var
-				var_desc=rootgrp.variables[var]
-				print var_desc.long_name
-				plt.imshow(var_desc)
-				plt.axis('off')
-				plt.savefig("images/"+var+'.png')
+		var=file.strip(".nc")
+		print (var)
+		var_desc=rootgrp.variables[var]
+		print (var_desc.long_name)
+		plt.imshow(var_desc)
+		plt.axis('off')
+		plt.savefig("images/"+path_file+"/"+var+'.png')	
 		rootgrp.close()
-
+'''	
 # # # examine the variables
 # print rootgrp.variables.keys()
 # var=rootgrp.variables.keys()[0]
